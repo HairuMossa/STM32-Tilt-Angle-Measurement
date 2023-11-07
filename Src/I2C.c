@@ -11,6 +11,9 @@
 #define SR1_RXNE 		(1U<<6)
 #define SR1_BTF			(1U<<2)
 
+
+
+
 void I2C1_burstWrite(char saddr, char maddr, int n, char* data ){
 
 	volatile int tmp;
@@ -40,6 +43,7 @@ void I2C1_burstWrite(char saddr, char maddr, int n, char* data ){
 
 	I2C1->CR1 |= CR1_STOP;
 }
+
 
 void I2C1_burstRead(char saddr , char maddr, int n, char* data){
 
