@@ -1,4 +1,7 @@
 #include "stm32f4xx.h"
+
+
+
 /*
  * MPU6050.h
  *
@@ -9,6 +12,9 @@
 #ifndef MPU6050_H_
 #define MPU6050_H_
 
+void readMPU6050Data(int16_t* accelX, int16_t* accelY,
+					 int16_t* accelZ, int16_t* gyroX,
+					 int16_t* gyroY, int16_t* gyroZ);
 
 #define MPU_ADDR_DEFAULT 0x68
 #define MPU_ADDR_SCND 0x69
