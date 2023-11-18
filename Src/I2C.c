@@ -1,6 +1,6 @@
 #include "I2C.h"
 
-
+int checking=0;
 
 // pb8 scl
 // pb9 sda
@@ -8,30 +8,31 @@
 
 void I2C1_burstWrite(char saddr, char maddr, int n, char* data ){
 
+
 	volatile int tmp;
 
-	while(I2C1->SR2 & (SR2_BUSY)){}
+	while(I2C1->SR2 & (SR2_BUSY)){checking = -1;}
 
 	I2C1->CR1 |= CR1_START;
 
-	while(!(I2C1->SR1 & (SR1_SB))){}
+	while(!(I2C1->SR1 & (SR1_SB))){checking = 1;}
 
 	I2C1->DR = saddr << 1;
 
-	while(!(I2C1->SR1 & (SR1_ADDR))){}
+	while(!(I2C1->SR1 & (SR1_ADDR))){checking = 2;}
 
 	tmp = I2C1->SR2;
 
-	while(!(I2C1->SR1 & (SR1_TXE))){}
+	while(!(I2C1->SR1 & (SR1_TXE))){checking = 3;}
 
 	I2C1->DR = maddr;
 
 	for (int i=0; i<n; i++){
-		while(!(I2C1->SR1 & (SR1_TXE))){}
+		while(!(I2C1->SR1 & (SR1_TXE))){checking = 4;}
 
 		I2C1->DR = *data++;
 	}
-	while(!(I2C1->SR1 & (SR1_BTF))){}
+	while(!(I2C1->SR1 & (SR1_BTF))){checking = 5;}
 
 	I2C1->CR1 |= CR1_STOP;
 }
@@ -156,13 +157,12 @@ void I2C1_init(void){
 	RCC->AHB1ENR |= (GPIOBEN);
 
 	// set pins to alternate function mode
-	GPIOB->MODER &= ~(1U<<16);
-	GPIOB->MODER |= (1U<<17);
+    GPIOB->AFR[1] &= ~0x000000FF;
+    GPIOB->AFR[1] |= 0x00000044;
+    GPIOB->MODER &= ~0x000F0000;
+    GPIOB->MODER |= 0x000A0000;
 
-	GPIOB->MODER &= ~(1U<<18);
-	GPIOB->MODER |= (1U<<19);
-
-	// set pins to opendrain
+	// set pins to open drain
 	GPIOB->OTYPER |= (1U<<8);
 	GPIOB->OTYPER |= (1U<<9);
 
