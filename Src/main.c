@@ -2,30 +2,29 @@
 #include "I2C.h"
 #include "MPU6050.h"
 
-uint8_t data_record[2];
+/*
+PB9 -  I2C1_SDA
+PB8 -  I2C1_SCL
+*/
+void delayMs(int n);
 
-int16_t x_acc=0;
+int16_t Ax, Ay, Az, Gx, Gy, Gz, temperature;
 
-void mpu6050_read(void){
-	uint8_t data[2];
 
-	I2C1_burstRead(MPU_ADDR_DEFAULT , 59, 2, (char*) data);
-	x_acc = (int16_t)(data[0]<< 8 | data[1]);
+
+int main(void){
+
+
+    mpu_init(); // initialize MPU6050
+    while(1){
+        readMPU6050Data(&Ax, &Ay, &Az, &Gx, &Gy, &Gz, &temperature); // read values
+        delayMs(50); // delay
+    }
 
 }
 
-int plz=0;
-int main(void)
-{
-
-	mpu_init();
-	while(1){
-		plz++;
-		mpu6050_read();
-		for(int i=0; i<1000; i++){
-
-		}
-
-
-	}
+void delayMs(int n) {
+    int i;
+    for (; n > 0; n--)
+        for (i = 0; i < 3195; i++) ; // Delay loop
 }
