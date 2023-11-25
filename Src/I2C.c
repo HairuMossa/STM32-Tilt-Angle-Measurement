@@ -11,30 +11,36 @@ void I2C1_burstWrite(char saddr, char maddr, int n, char* data ){
 
 	volatile int tmp;
 
-	while(I2C1->SR2 & (SR2_BUSY)){checking = -1;}
 
-	I2C1->CR1 |= CR1_START;
+	while(I2C1->SR2 & (SR2_BUSY)){checking = -1;} // check if the bus is free
 
-	while(!(I2C1->SR1 & (SR1_SB))){checking = 1;}
+	I2C1->CR1 |= CR1_START; // generate a start
 
-	I2C1->DR = saddr << 1;
+	while(!(I2C1->SR1 & (SR1_SB))){checking = 1;} // wait until start flag is set
 
-	while(!(I2C1->SR1 & (SR1_ADDR))){checking = 2;}
+	I2C1->DR = saddr << 1; // transmit slave address
 
-	tmp = I2C1->SR2;
+	while(!(I2C1->SR1 & (SR1_ADDR))){checking = 2;} // wait until address flag is set
 
-	while(!(I2C1->SR1 & (SR1_TXE))){checking = 3;}
+	tmp = I2C1->SR2; // clear address flag
 
-	I2C1->DR = maddr;
+	while(!(I2C1->SR1 & (SR1_TXE))){checking = 3;} // wait until data register is empty
+
+	I2C1->DR = maddr; // send memory address
 
 	for (int i=0; i<n; i++){
+
+
+		// wait until data register is empty
 		while(!(I2C1->SR1 & (SR1_TXE))){checking = 4;}
 
+		// transmit data to memory address
 		I2C1->DR = *data++;
 	}
+	// wait until transfer is complete
 	while(!(I2C1->SR1 & (SR1_BTF))){checking = 5;}
 
-	I2C1->CR1 |= CR1_STOP;
+	I2C1->CR1 |= CR1_STOP; // generate a stop
 }
 
 
@@ -151,12 +157,11 @@ void I2C1_byteRead(char saddr, char maddr, char* data){
 
 
 void I2C1_init(void){
-	// for more detail on the steps see onenote on pc
 
-	// enable clock access
+	// enable clock access to gpio
 	RCC->AHB1ENR |= (GPIOBEN);
 
-	// set pins to alternate function mode
+	// configure the pins to Alternate function mode
     GPIOB->AFR[1] &= ~0x000000FF;
     GPIOB->AFR[1] |= 0x00000044;
     GPIOB->MODER &= ~0x000F0000;
@@ -166,24 +171,24 @@ void I2C1_init(void){
 	GPIOB->OTYPER |= (1U<<8);
 	GPIOB->OTYPER |= (1U<<9);
 
-	// ENABLE PULL UP
+	// enable pull-up
 	GPIOB->PUPDR |=(1U<<16);
 	GPIOB->PUPDR &=~(1U<<17);
 
 	GPIOB->PUPDR |=(1U<<18);
 	GPIOB->PUPDR &=~(1U<<19);
 
-	// ENABLOE CLOCK ACCESS TO I2C1
+	// enable clock access to the i2c
 	RCC->APB1ENR |= (I2C1EN);
 
-	// ENTER RESET MODE
+	// enter reset mode
 	I2C1->CR1 |= (1U<<15);
 
-	// COME OUT OF RESET MODE
+	// exit out of reset mode
 	I2C1->CR1 &=~(1U<<15);
 
 
-	// SET PERIPHERAL CLOCK FREQUENC
+	// set peripheral clock frequency
 	I2C1->CR2 = (1U<<4);  // 16Mhz
 
 	/// SET I2C TO STANDARD MODE , 100KHZ CLOCK
@@ -195,9 +200,4 @@ void I2C1_init(void){
 
 	// ENABLE I2C1 MODULE
 	I2C1->CR1 |= CR1_PE;
-
-
-
-
-
 }
