@@ -1,35 +1,24 @@
 #include "MPU6050.h"
 #include "I2C.h"
 
-int su=0;
-
-void write_mpu(uint8_t reg, char value){
-	char data[1];
-	data[0] = value;
-	I2C1_burstWrite(MPU_ADDR_DEFAULT, reg, 1 , data );
-}
-
 void mpu_init(void){
 
 	// initialize I2C
 	I2C1_init();
-	su=2;
 	// configure the acceleration to 4g mode
-//	I2C1_burstWrite(MPU_ADDR_DEFAULT, MPU_ACCEL_CONFIG_REG, 1, 0b00001000 );
-	write_mpu(MPU_ACCEL_CONFIG_REG, 0b00001000);
-	su=3;
+	char dataToSend = 0b00001000;
+	I2C1_burstWrite(MPU_ADDR_DEFAULT, MPU_ACCEL_CONFIG_REG, 1, &dataToSend );
+	// write_mpu(MPU_ACCEL_CONFIG_REG, 0b00001000);
 
 	// configure the GYRO to ± 500 °/s mode
 
-	I2C1_burstWrite(MPU_ADDR_DEFAULT, MPU_GYRO_CONFIG_REG, 1, 0b00001000 );
-
+	I2C1_burstWrite(MPU_ADDR_DEFAULT, MPU_GYRO_CONFIG_REG, 1, &dataToSend );
 	// configuring the power register to exit sleep mode
 			//and enable the temperature sensor
-	I2C1_burstWrite(MPU_ADDR_DEFAULT, 0x6B, 1, 0b00001000 );
-
+	dataToSend = 0x00; // Clear SLEEP bit to wake up the MPU6050
+	I2C1_burstWrite(MPU_ADDR_DEFAULT, MPU_PWR_MGMT_1_REG, 1, &dataToSend);
 
 }
-
 
 
 void readMPU6050Data(int16_t* accelX, int16_t* accelY,
@@ -53,17 +42,13 @@ void readMPU6050Data(int16_t* accelX, int16_t* accelY,
     *gyroY = (int16_t)((gyroData[2] << 8) | gyroData[3]);
     *gyroZ = (int16_t)((gyroData[4] << 8) | gyroData[5]);
 
-    // measure temperture
+    // measure temperature
     char temperature[2];
     I2C1_burstRead(MPU_ADDR_DEFAULT, MPU_TEMP_REG, 2, temperature);
 
     // combine the high and low bytes
-    *temp = (int16_t)((temperature[0] << 8) | temperature[1]);
+    int16_t raw_Temp = (int16_t)((temperature[0] << 8) | temperature[1]);
+
+    // convert to degree C by using the formula in MPU6050 data sheet
+    *temp = raw_Temp / 340.0 + 36.53;
 }
-
-
-
-
-
-
-
